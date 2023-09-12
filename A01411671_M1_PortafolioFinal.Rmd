@@ -1,0 +1,588 @@
+---
+title: "A01411671 M1. Portafolio | Entrega Final"
+author: "Miguel Ángel Bermea Rodríguez | A01411671"
+date: "2023-09-12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Reporte final de "El precio de los autos"
+
+# Portafolio
+
+## Resumen
+
+**Problemática** La empresa automovilística china busca ingresar al mercado estadounidense y competir con sus contrapartes locales. Para lograrlo, necesita comprender los factores que afectan el precio de los automóviles en los Estados Unidos. En este informe, se aborda esta problemática mediante el análisis de datos y técnicas estadísticas.
+
+**Metodología** Se realizó un análisis exploratorio de datos para comprender la distribución y relaciones entre las variables. Se seleccionaron las variables más relevantes, como enginesize, horsepower y carwidth, para construir un modelo de regresión lineal múltiple. Se realizaron pruebas de hipótesis para validar el modelo acompañado de pruebas de normalidad de los residuos, interpretación del coeficiente de determinación, verificación de media cero y prueba de homocedasticidad.
+
+**Resultados Principales** El modelo de regresión lineal múltiple explica aproximadamente el 82.1% de la variación en el precio de los automóviles. Las variables enginesize, horsepower y carwidth son significativas para predecir el precio. Sin embargo, se encontró heterocedasticidad en el modelo, lo que sugiere la necesidad de ajustes adicionales.
+
+## Introducción
+
+La empresa automovilística china enfrenta un desafío importante al ingresar al mercado automotriz de los Estados Unidos. Para tener éxito en este mercado altamente competitivo, es crucial comprender los factores que influyen en el precio de los automóviles. ¿Qué características de un automóvil impactan más en su precio? ¿Cuál es la importancia de estas características en el contexto estadounidense?
+
+Este problema es de gran relevancia ya que una comprensión precisa de los factores que afectan el precio permitirá a la empresa china tomar decisiones estratégicas informadas, como la fijación de precios competitivos y el desarrollo de automóviles que se adapten mejor a las preferencias de los consumidores estadounidenses.
+
+En este informe, se abordará la problemática mediante un análisis de datos y técnicas estadísticas. Se explorarán las relaciones entre las características de los automóviles y sus precios en el mercado estadounidense, y se construirá un modelo de regresión lineal múltiple para predecir el precio en función de las características seleccionadas. Además, se realizarán pruebas de hipótesis para validar la adecuación del modelo.
+
+Este análisis proporcionará información valiosa a la empresa china, ayudándoles a tomar decisiones fundamentadas mientras ingresan al mercado automotriz de los Estados Unidos.
+
+## Contenido de Primera entrega
+
+### Finalidad de la entrega
+
+La primera la entregarás al finalizar la semana 3. La finalidad es que entregues un borrador de la versión total de la exploración y preparación de los datos para que te sea retroalimentada. Esta entrega sólo es requisito.
+
+### Descripción
+
+Una empresa automovilística china aspira a entrar en el mercado estadounidense. Desea establecer allí una unidad de fabricación y producir automóviles localmente para competir con sus contrapartes estadounidenses y europeas. Contrataron una empresa de consultoría de automóviles para identificar los principales factores de los que depende el precio de los automóviles, específicamente, en el mercado estadounidense, ya que pueden ser muy diferentes del mercado chino. Esencialmente, la empresa quiere saber:
+
+-   Qué variables son significativas para predecir el precio de un automóvil
+
+-   Qué tan bien describen esas variables el precio de un automóvil
+
+### Lectura de datos
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+# Conjunto de datos de diferentes tipos de automóviles en el mercado estadounidense
+df <- read.csv("precios_autos.csv")
+head(df)
+
+# Conversión de las variables cualitativas/categóricas a factores
+df$symboling <- as.factor(df$symboling)
+df$CarName <- as.factor(df$CarName)
+df$fueltype <- as.factor(df$fueltype)
+df$carbody <- as.factor(df$carbody)
+df$drivewheel <- as.factor(df$drivewheel)
+df$enginelocation <- as.factor(df$enginelocation)
+df$enginetype <- as.factor(df$enginetype)
+df$cylindernumber <- as.factor(df$cylindernumber)
+```
+
+### Exploración y preparación de la base de datos (Portafolio de Análisis)
+
+#### 1. Exploración de la base de datos
+
+En esta parte, se realizan medidas estadísticas apropiadas para las variables cuantitativas y cualitativas. Se exploran las variables cuantitativas con medidas de posición, gráficos de distribución y análisis de colinealidad. También se analizan las variables categóricas mediante gráficos de barras y diagramas de pastel.
+
+##### 1. Medidas estadísticas apropiadas para las variables cuantitativas y cualitativas
+
+```{r}
+# Variables cuantitativas
+summary(df[, sapply(df, is.numeric)])
+```
+
+```{r}
+# Variables cualitativas
+summary(df[,sapply(df, is.factor)])
+```
+
+##### 2. Exploración usando herramientas de visualización
+
+**Variables cuantitativas**
+
+A continuación se presentan ciertas métricas de las variables (cuartiles y valores atípicos) y también se presenta una matriz de correlación entre las variables. 
+
+Por otro lado, si se desea observar a mayor detalle la exploración de estas variables puedes ir al apartado de anexos que se encuentra al final de este reporte. En dicha sección podrás encontrar los boxplots, histogramas y diagramas de dispersión que fueron generados en esta sección o fase del proyecto.
+
+Gracias a la exploración utilizando herramientas de visualización fue que se logró observar la distribución de los datos y analizar colinealidad.
+
+```{r}
+# Variables cuantitativas
+## Medidas de posición: cuartiles, outlier (valores atípicos), boxplots
+
+## Análisis de distribución de los datos (Histogramas). 
+## Identificar si tiene forma simétrica o asimétrica
+
+## Analiza colinealidad (coeficiente de correlación y diagramas de dispersión)
+
+num_vars <- names(df)[sapply(df, is.numeric)]
+
+# Crear una lista para almacenar los gráficos
+graficos_boxplot_histograma <- list()
+graficos_dispersion <- list()
+
+# Para cada variable cuantitativa
+for (var_name in num_vars) {
+  # Selecciona la variable cuantitativa
+  var <- df[[var_name]]
+  
+  # Almacenar los datos en la lista
+  graficos_boxplot_histograma[[var_name]] <- list(datos = var)
+  
+  # Calcula los cuartiles
+  cuartiles <- quantile(var, probs = c(0.25, 0.5, 0.75))
+  print(paste("Cuartiles para", var_name))
+  print(cuartiles)
+  
+  # Identifica valores atípicos
+  iqr <- IQR(var)
+  outliers <- var[var < (cuartiles[1] - 1.5 * iqr) | var > (cuartiles[3] + 1.5 * iqr)]
+  print(paste("Valores atípicos para", var_name))
+  print(outliers)
+  
+  # Cambio a la ventana gráfica
+  par(mfrow = c(1, 2))
+  
+  # Crea un gráfico de caja
+  boxplot_var <- boxplot(var, main = paste("Gráfico de caja para", var_name), plot = FALSE) 
+  # Quitar plot = FALSE para ver aqui
+  
+  # Crea un histograma
+  #hist_var <- hist(var, main = paste("Histograma para", var_name), xlab = var_name, col = "blue", plot = FALSE)
+  hist_var <- hist(var, plot = FALSE)
+  # Comentar opcion con plot=FALSE y descomentar la otra para ver aqui
+
+  # Cambio a la ventana gráfica
+  par(mfrow = c(2, 2))
+  
+  # Crea diagramas de dispersión con otras variables cuantitativas
+  for (other_var_name in num_vars) {
+    if (other_var_name != var_name) {
+      #plot(df[[var_name]], df[[other_var_name]], main = "Diagrama de dispersión", 
+           #xlab = var_name, ylab = other_var_name)
+      graficos_dispersion[[paste(var_name, other_var_name, sep = "_")]] <- 
+        list(x = df[[var_name]], y = df[[other_var_name]])
+    }
+  }
+}
+
+# Restablece la ventana gráfica
+par(mfrow = c(1, 1))
+
+library(corrplot)
+## Matriz de correlación entre variables cuantitativas
+corr_matrix <- cor(df[,num_vars])
+corrplot(corr_matrix, method = "circle")
+```
+
+**Variables categóricas**
+
+En este apartado se trabajó con la exploración de las variables categóricas del conjunto de datos (se enlistan a continuación). 
+
+Si se desea observar la exploración de estas variables puedes ir al apartado de anexos que se encuentra al final de este reporte. En dicha sección podrás encontrar los diagramas de barras y diagramas de pastel que fueron generados en esta sección o fase del proyecto, asi como los boxplots y diagramas de barras de precio por cada categoria de cada variable.
+
+Gracias a la exploración utilizando herramientas de visualización fue que se logró observar la distribución de los datos y analizar asociación o colinealidad.
+
+```{r}
+# Variables categóricas
+## Distribución de los datos (diagramas de barras, diagramas de pastel)
+
+## Analiza asociación o colinealidad (diagramas de caja 
+## y bigote de precio por categoría y barras por categoría)
+
+cat_vars <- names(df)[sapply(df, is.factor)]
+cat_vars
+
+# Crear una lista para almacenar los gráficos
+graficos_barras_pastel <- list()
+graficos_barras_boxplot_precio <- list()
+
+for (var_name in cat_vars) {
+  # Selecciona la variable categórica
+  var <- df[[var_name]]
+  
+  # Almacenar los datos en la lista
+  graficos_barras_pastel[[var_name]] <- list(datos = var)
+  
+  # Cambio de margen 
+  par(mar = c(4.5,4.5,4.5,4.5))
+  
+  # Divide la ventana gráfica
+  par(mfrow = c(1, 2))
+  
+  # Diagramas de barras
+  barplot(table(var), main = paste("Diagrama de barras de", var_name), xlab = var_name, ylab ="Frecuencia", plot = FALSE)
+  # Quitar plot = FALSE para ver aqui
+  
+  # Diagramas de pastel
+  #pie(table(var), main = paste("Diagrama de pastel de", var_name))
+  
+  # Restablece la ventana gráfica
+  par(mfrow = c(1, 1))
+}
+
+for (other_var_name in cat_vars) {
+  # Selecciona la variable categórica
+  other_var <- df[[other_var_name]]
+  
+  graficos_barras_boxplot_precio[[other_var_name]] <- list(precio = df$price, otra_var = other_var)
+  
+  # Diagramas de caja y bigote
+  #boxplot(df$price ~ other_var, main = paste("Precio por", other_var_name), 
+          #xlab = other_var_name, ylab = "Precio")
+  
+  # Diagramas de barras
+  barplot(tapply(df$price, other_var, mean), main = paste("Precio promedio por", other_var_name), 
+          xlab = other_var_name, ylab = "Precio", plot = FALSE)
+  # Quitar plot = FALSE para ver aqui
+}
+
+```
+
+##### 3. Problemas de calidad de datos (valores faltantes y outliers)
+
+En esta sección, se identifican los valores faltantes por columna y se analizan los outliers en las variables cuantitativas y cualitativas. Se mencionan posibles acciones a tomar en relación a los outliers.
+
+**Valores faltantes por columna**
+
+```{r}
+# Valores faltantes por columna
+colSums(is.na(df))
+```
+
+**Outliers**
+
+En la sección 2. Exploración usando herramientas de visualización:
+
+-   Para las variables cuantitvas se hizo uso de IQR para obtener los outliers y se visualizó con boxplot
+
+-   Para las variables cualitativas también se visualizó con boxplot
+
+##### 4. Selección de variables para el análisis de las características de los automóviles que determinan su precio
+
+Se mencionan las variables seleccionadas para el análisis, como enginesize, horsepower, y carwidth, y se plantea la posibilidad de manejar datos categóricos mediante variables dummy.
+
+\*\* = Tal vez la utilizo
+
+-   enginesize
+
+-   horsepower
+
+-   curbweight
+
+-   carlength
+
+-   carwidth
+
+-   wheelbase
+
+-   cylindernumber\*\*
+
+-   carbody\*\*
+
+#### 2. Preparación de la base de datos
+
+##### 1. Selección de datos a utilizar
+
+-   Maneja datos categóricos: transforma a variables dummy si es necesario.
+
+En caso de que utilice los datos categóricos preseleccionados (cylindernumber y carbody), debo de tener en cuenta esto para manejarlos de la forma adecuada.
+
+```{r}
+cylindernumber_dummy <- model.matrix(~ cylindernumber - 1, data = df)
+carbody_dummy <- model.matrix(~ carbody - 1, data = df)
+```
+
+```{r}
+head(cylindernumber_dummy)
+```
+
+```{r}
+head(carbody_dummy)
+```
+
+En caso de que solo utilice datos cuantitativos, no debo de preocuparme.
+
+-   Maneja apropiadamente datos atípicos.
+
+    -   Identificación: Ya identifique los datos atípicos mediante IQR y se pueden visualizar con los boxplots.
+
+    -   Contexto: La existencia de estos datos se debe a ser datos válidos pero poco comunes
+
+    -   Decisión: Si bien aún no tengo la certeza, si que he identificado posibles alternativas para manejar estos datos
+
+        ```         
+        1) Eliminarlos: En caso de que los considere no representativos, 
+        puedo optar por eliminarlos. Cabe recalcar que debo estar seguro 
+        ya que podría afectar la integridad de mis resultados.
+
+        2) Transformar los datos (va de la mano con lo último de esta entrega): 
+        En algunos casos podría aplicar transformaciones matemáticas a mis datos 
+        para reducir el impacto de los valores atípicos.
+
+        3) Tratarlos por separado: Puedo analizarlos por separado para entender 
+        mejor su naturaleza y posible impactos en mis resultados.
+        ```
+
+        Actualmente me decanto más por tratarlos por separado.
+
+##### 2. Transformación de datos a utilizar (en caso de ser necesario)
+
+-   Revisa si es necesario discretizar los datos
+
+En caso de ser necesario, tengo pensado hacer uso de la función *cut* en R para dividir una variable numérica en intervalos y asignar cada observación a uno de esos intervalos.
+
+-   Revisa si es necesario escalar y normalizar los datos
+
+En caso de ser necesario, tengo pensado hacer uso de la función *scale* en R para estandarizar una variable numérica restando su media y dividiendo por su desviación estándar.
+
+*Destacar que la transformación de datos dependerá del modelo a utilizar (lo cual entra en Modelación y verificación del modelo (Portafolio de implementación), ya que es aqui donde buscaré el mejor modelo predictivo para la variable precio)*
+
+## Contenido de Segunda entrega
+
+### Finalidad de la entrega
+
+Se entregará al finalizar la semana 4. La finalidad es que entregues un borrador de la versión total de la modelación y verificación del modelo (solución final) para que te sea retroalimentada. Esta entrega también es sólo requisito.
+
+### Regresión lineal múltiple y Pruebas de hipótesis
+
+La regresión lineal múltiple es una herramienta estadística útil para analizar la relación entre una variable dependiente y varias variables independientes.
+
+En el contexto de la situación problema, la regresión lineal múltiple puede utilizarse para predecir el precio de un automóvil en función de sus características (variables seleccionadas). Esta herramienta me permite identificar qué variables son significativas para predecir el precio del automóvil y cuantificar su efecto sobre el precio.
+
+Por otro lado, las pruebas de hipótesis pueden utilizarse para verificar si se cumplen los supuestos de un modelo de regresión lineal múltiple, como la normalidad y la homocedasticidad de los residuos. Esto me permite validar el modelo y asegurarme de que las predicciones sean confiables.
+
+```{r}
+model <- lm(price ~ enginesize + horsepower + curbweight + carlength + carwidth + wheelbase, 
+            data = df)
+
+summary(model)
+```
+
+#### Validación del modelo
+
+**Coeficiente de determinación**
+
+```{r}
+rsq <- summary(model)$r.squared
+rsq
+```
+
+El coeficiente de determinación o R-cuadrado, es una medida que representa que tan bien la línea de regresión se ajusta a los datos, es decir, la bondad de ajuste del modelo.
+
+En este caso, el valor de R-cuadrado es 0.8210592, lo que significa que aproximadamente el 82.1% de la variación en la variable dependiente (precio del automóvil) puede ser explicada por las variables independientes seleccionadas para el modelo.
+
+Cabe recalcar que las variables *enginesize, horsepower* y *carwidth* son las más significativas para predecir el precio del automóvil, ya que tienen p-values bajos (menores que 0.05).
+
+```{r}
+library(ggplot2)
+
+data <- data.frame(R_squared = c(rsq))
+
+ggplot(data, aes(x = "", y = R_squared)) +
+  geom_bar(stat = "identity") +
+  ylim(0, 1) +
+  labs(x = "", y = "R-squared") +
+  theme(axis.text.x = element_blank())
+```
+
+El gráfico muestra una barra que representa el valor del R-cuadrado y tiene un eje y que va desde 0 hasta 1. Esto permite ver qué tan cerca está el modelo de explicar completamente la variabilidad en la variable dependiente.
+
+**Normalidad de los residuos**
+
+(1) Hipótesis de normalidad
+
+-   H0: Los residuos siguen una distribución normal.
+
+-   Ha: Los residuos no siguen una distribución normal.
+
+(2) Regla de decisión
+
+Se utilizará la prueba de Anderson-Darling para evaluar la normalidad de los residuos.
+
+Si el p-value es menor que el nivel de significancia (por ejemplo, 0.05), rechazamos la hipótesis nula y concluimos que los residuos no siguen una distribución normal.
+
+(3) Análisis del resultado
+
+```{r}
+library(nortest)
+
+ad.test(model$residuals)
+```
+
+(4) Conclusión
+
+El p-value es 3.684e-06, lo que es muy bajo. Esto indica que los residuos del modelo no siguen una distribución normal y, por lo tanto, se rechaza la hipótesis nula de normalidad. Esto sugiere que podría ser necesario revisar el modelo y considerar la posibilidad de transformar las variables o utilizar un modelo diferente para ajustar los datos.
+
+**Verificación de media cero**
+
+(1) Hipótesis de media cero
+
+-   H0: La media de los residuos es igual a 0.
+
+-   H1: La media de los residuos no es igual a 0.
+
+(2) Regla de decisión
+
+Se utilizará la prueba t de una muestra aplicada a los residuos del modelo para determinar si la media es igual a un valor específico.
+
+El p-value indica si la media de los residuos es igual a 0. Un p-value bajo (menor que 0.05) indica que la media de los residuos no es igual a 0 y, por lo tanto, se rechaza la hipótesis nula.
+
+(3) Análisis del resultado
+
+```{r}
+t_test <- t.test(model$residuals)
+t_test
+```
+
+```{r}
+library(ggplot2)
+
+data <- data.frame(
+  Variable = "Residuals",
+  `LowerBound` = t_test$conf.int[1],
+  `UpperBound` = t_test$conf.int[2]
+)
+
+ggplot(data, aes(x = Variable, ymin = `LowerBound`, ymax = `UpperBound`)) +
+  geom_errorbar(width = 0.2) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(x = "", y = "Confidence Interval") +
+  theme(axis.text.x = element_blank())
+```
+
+La línea punteada que representa la hipótesis nula (media igual a 0) se encuentra dentro del intervalo de confianza del 95% para la media de los residuos, esto indica que no hay evidencia suficiente para rechazar la hipótesis nula. En otras palabras, no hay evidencia suficiente para afirmar que la media de los residuos no es igual a 0.
+
+(4) Conclusión
+
+En este caso, el p-value es 1, lo que es muy alto. Esto indica que no hay evidencia suficiente para rechazar la hipótesis nula de que la media de los residuos es igual a 0. Esto sugiere que el modelo está bien especificado y que no hay sesgo en las predicciones.
+
+**Homocedasticidad**
+
+(1) Hipótesis de prueba de Breusch-Pagan
+
+-   H0: No hay heterocedasticidad en el modelo, la varianza de los residuos es constante.
+
+-   Ha: Hay heterocedasticidad en el modelo, la varianza de los residuos no es constante.
+
+(2) Regla de decisión
+
+Para verificar si se cumple el supuesto de homocedasticidad en el modelo, se utilizará la prueba de Breusch-Pagan. Esta prueba se utiliza para determinar si hay evidencia de heterocedasticidad (es decir, si la varianza de los residuos no es constante) en un modelo de regresión lineal múltiple.
+
+Si el p-value es menor que el nivel de significancia (por ejemplo, 0.05), se rechaza la hipótesis nula y se concluye que hay evidencia suficiente para afirmar que hay heterocedasticidad en el modelo.
+
+(3) Análisis del resultado
+
+Se grafican los residuos para observar tendencia:
+
+```{r}
+plot(model$fitted.values, model$residuals)
+abline(h=0, col='blue')
+```
+
+Se utiliza prueba de Breusch-Pagan:
+
+```{r}
+library(lmtest)
+library(zoo)
+
+bp_test <- bptest(model)
+bp_test
+```
+
+(4) Conclusión
+
+En este caso, el p-value es 4.209e-14, lo que es muy bajo. Esto indica que hay evidencia suficiente para rechazar la hipótesis nula y concluir que hay heterocedasticidad en el modelo. Esto sugiere que podría ser necesario revisar el modelo y considerar la posibilidad de transformar las variables o utilizar técnicas como la regresión ponderada para corregir este problema.
+
+### Conclusión del análisis
+
+En base a los resultados de mi análisis, se puede concluir que el modelo de regresión lineal múltiple que ajusté para predecir el precio de un automóvil en función de la variables seleccionadas tiene un buen ajuste. El valor del coeficiente de determinación (R-cuadrado) es 0.8210592, lo que significa que aproximadamente el 82.1% de la variación en el precio del automóvil puede ser explicada por las variables independientes seleccionadas para el modelo. Además, las variables *enginesize, horsepower* y *carwidth* son significativas para predecir el precio del automóvil, ya que tienen p-values bajos.
+
+Sin embargo, también se encontró evidencia de heterocedasticidad en el modelo, lo que indica que la varianza de los residuos no es constante. Esto sugiere que podría ser necesario revisar el modelo y considerar la posibilidad de transformar las variables o utilizar técnicas como la regresión ponderada para corregir este problema.
+
+En resumen, mi análisis muestra que el modelo de regresión lineal múltiple que ajusté tiene un buen ajuste y que las variables *enginesize, horsepower* y *carwidth* son significativas para predecir el precio del automóvil. Sin embargo, también se encontró evidencia de heterocedasticidad en el modelo, lo que sugiere que podría ser necesario revisarlo y la posibilidad de considerar otras variables que reemplacen a las que no fueron tan significativas, transformar las variables o utilizar técnicas para corregir este problema.
+
+## Conclusión general
+
+En este informe, abordé la problemática planteada por la empresa automovilística china que busca ingresar al mercado estadounidense y competir con sus contrapartes locales. La empresa deseaba comprender los factores que influyen en el precio de los automóviles en los Estados Unidos, específicamente. El análisis se centró en identificar qué variables son significativas para predecir el precio de un automóvil y qué tan bien describen esas variables el precio de un automóvil en este mercado.
+
+Los resultados indican que el modelo de regresión lineal múltiple que construí tiene un buen ajuste y puede explicar aproximadamente el 82.1% de la variación en el precio de los automóviles. Además, identifiqué que las variables enginesize, horsepower y carwidth son las más significativas para predecir el precio de un automóvil en el mercado estadounidense.
+
+Sin embargo, también encontré evidencia de heterocedasticidad en el modelo, lo que sugiere que la varianza de los residuos no es constante. Esto puede requerir ajustes adicionales en el modelo o la consideración de otras variables que puedan mejorar su capacidad predictiva.
+
+En resumen, este análisis proporciona a la empresa automovilística china información valiosa que les ayudará a tomar decisiones estratégicas informadas a medida que ingresan al mercado automotriz de los Estados Unidos. Les permite comprender mejor qué características de los automóviles impactan significativamente en el precio y cómo pueden adaptar sus productos y estrategias de mercado en consecuencia.
+
+## Anexos
+
+Se proporcionan anexos con gráficos adicionales que respaldan el análisis y las conclusiones presentadas en el reporte, asi como enlaces de interés para las Evidencias de la unidad de formación.
+
+**Boxplots e histogramas de variables cuantitativas**
+
+```{r}
+## Boxplots e Histogramas
+for (var_name in num_vars) {
+  par(mfrow = c(1, 2))
+  # Imprimir el gráfico de caja
+  boxplot(graficos_boxplot_histograma[[var_name]]$datos, main = paste("Gráfico de caja para", var_name))
+  
+  # Imprimir el histograma
+  hist(graficos_boxplot_histograma[[var_name]]$datos, main = paste("Histograma para", var_name), xlab = var_name, col = "blue")
+}
+```
+
+**Diagramas de dispersión de variables cuantitativas**
+
+```{r}
+# Cambio a la ventana gráfica
+  par(mfrow = c(2, 2))
+
+for (var_name in num_vars) {
+  for (other_var_name in num_vars) {
+    if (other_var_name != var_name) {
+      # Recrea e imprime el diagrama de dispersión
+      plot(graficos_dispersion[[paste(var_name, other_var_name, sep = "_")]]$x, 
+           graficos_dispersion[[paste(var_name, other_var_name, sep = "_")]]$y, 
+           main = "Diagrama de dispersión", xlab = var_name, ylab = other_var_name)
+    }
+  }
+}
+```
+
+**Diagramas de barras y de pastel de variables categóricas**
+
+```{r}
+# En la sección de anexos
+for (var_name in cat_vars) {
+  # Cambio de margen 
+  par(mar = c(4.5,4.5,4.5,4.5))
+  
+  # Divide la ventana gráfica
+  par(mfrow = c(1, 2))
+  
+  # Recrea e imprime el diagrama de barras
+  barplot(table(graficos_barras_pastel[[var_name]]), main = paste("Diagrama de barras de", var_name), xlab = var_name, ylab ="Frecuencia")
+  
+  # Recrea e imprime el diagrama de pastel
+  pie(table(graficos_barras_pastel[[var_name]]), main = paste("Diagrama de pastel de", var_name))
+}
+```
+
+**Boxplots y diagramas de barras de precio por cada categoria de cada variable categórica**
+
+```{r}
+for (other_var_name in cat_vars) {
+  par(mfrow = c(1, 1))
+  
+  # Recrea e imprime el diagrama de caja y bigote
+  boxplot(graficos_barras_boxplot_precio[[other_var_name]]$precio ~ graficos_barras_boxplot_precio[[other_var_name]]$otra_var, 
+          main = paste("Precio por", other_var_name), xlab = other_var_name, ylab = "Precio")
+  
+  # Recrea e imprime el diagrama de barras
+  barplot(tapply(graficos_barras_boxplot_precio[[other_var_name]]$precio, 
+                 graficos_barras_boxplot_precio[[other_var_name]]$otra_var, mean), 
+          main = paste("Precio promedio por", other_var_name), xlab = other_var_name, ylab = "Precio")
+}
+```
+
+
+-   Repositorio Portafolio M1:
+
+<https://github.com/MaikiBR/m1-portfolio>
+
+-   Repositorio Portafolio M2:
+
+<https://github.com/MaikiBR/m2-portfolio>
+
+-   Drive de Evidencia 1. Portafolio de análisis:
+
+<https://drive.google.com/drive/folders/1JgDDc_ol1RJguCyqgyFWukCq63C6a2Z5?usp=sharing>
+
+-   Drive de Evidencia 2. Portafolio de implementación:
+
+<https://drive.google.com/drive/folders/1qF6_e0_FKQUAO8aSdvJ-nbT6nyMXDTeA?usp=sharing>
