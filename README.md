@@ -1,7 +1,9 @@
 # Archivos en el repositorio
 
+* **MiguelÁngelBermeaRodríguez_A01411671_M1_IAParaCienciaDeDatos_ReporteFinal.pdf** | *Reporte final*
+* **A01411671_M1_PortafolioFinal.Rmd** | *Archivo de R Markdown del Reporte final*
 * **A01411671_M1_PortafolioAnálisis_2daEntrega.Rmd** | *Archivo de R Markdown donde se ha trabajado con el proyecto del M1*
-* **A01411671_M1_Portafolio_2daEntrega.pdf** | *Reporte generado a partir del archivo de R Markdown*
+* **A01411671_M1_Portafolio_2daEntrega.pdf** | *Reporte generado a partir del archivo de R Markdown de la 2da entrega*
 * **precios_autos.csv** | *Dataset del proyecto*
 * **precios_autos_Diccionario.xlsx** | *Diccionario de variables del dataset*
 
